@@ -5,6 +5,7 @@
 
 -- ChangeLog --
 * Date: brief synopsis of what we did (part of the 20 minute time period)
+* 9/28/2021 - Cover basics of Java
 
 -- Last Year's Code --
 https://github.com/Calvin-LLC/2020-Central_Robotics
