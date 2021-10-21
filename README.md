@@ -21,7 +21,7 @@
 
 
 -- To Do --
-X Organizing last year's code (comment it all & add to repo) 
+* Organizing last year's code (comment it all & add to repo) 
 * Communicate with build team in order to start the movement code
 
 
