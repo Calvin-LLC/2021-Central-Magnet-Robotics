@@ -1,31 +1,20 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 
-/* FTC Documentation & resources: */
-
-/* ctrl click on the links to go to them
- * season info: https://www.firstinspires.org/robotics/ftc/game-and-season
- * ftc documentation: https://ftctechnh.github.io/ftc_app/doc/javadoc/index.html
- * simple setup guide: https://www.firstinspires.org/sites/default/files/uploads/resource_library/ftc/android-studio-guide.pdf*/
-
-// you can look in FtcRobotController->java->org.firstinspires.ftc.robotcontroller->external.samples for examples
-
-@TeleOp(name = "Black Robot v0.1", group = "best_opmode")
-public class motor_test<motor> extends LinearOpMode {
+@TeleOp(name = "Team black robnot", group = "best_opmode")
+public class beta_test<motor> extends LinearOpMode {
 
     // modifications/power
-    private final double duck_power = .278;
-    private final double pivot_mod = .85;
-    private final double wheel_mod = 1;
-    private final double lazy_power = 1;
-    private final double arm_out_power = 1;
-    private final double arm_up_power = 1;
+    private final double pivot_mod  = .85;
+    private final double wheel_mod  = 1;
+    private final double arm_mod    = .5;
 
 
     // moto declarations
@@ -34,20 +23,17 @@ public class motor_test<motor> extends LinearOpMode {
     private DcMotor back_left   = null;
     private DcMotor back_right  = null;
 
-    private DcMotor arm_up  = null; // torquenado, needs positive and negative
-    private DcMotor arm_out = null;
 
-    private DcMotor lazy = null; // corehex for lazysusan spin
-    private DcMotor duck = null; // gobuilda motor, only one direction
+    // arm shananaginz
+    private DcMotor arm_pivot   = null;
+    private DcMotor arm_raise   = null;
+    private DcMotor duck_wheel  = null;
+    private Servo gripper       = null;
 
-    // servo
-    private Servo claw = null;
-
+    boolean y_toggle = false;
 
     @Override   // we're over-riding their function to run our code instead of ftc's!
     public void runOpMode() {
-
-        boolean y_toggle = false;
         waitForStart();
         while (opModeIsActive()) {
             /* Since joystick input is constantly changing, we want to update it as fast as possible,
@@ -58,61 +44,51 @@ public class motor_test<motor> extends LinearOpMode {
             back_left   = hardwareMap.get(DcMotor.class, "back_left");
             back_right  = hardwareMap.get(DcMotor.class, "back_right");
 
-            arm_up  = hardwareMap.get(DcMotor.class, "arm_up");
-            arm_out = hardwareMap.get(DcMotor.class, "arm_out");
-            lazy    = hardwareMap.get(DcMotor.class, "lazy");
-            duck    = hardwareMap.get(DcMotor.class, "duck");
 
-            claw  = hardwareMap.get(Servo.class, "claw");
+            //arm_stand = hardwareMap.get(DcMotor.class, "arm_stand");
+            gripper     = hardwareMap.get(Servo.class, "gripper");
+            duck_wheel  = hardwareMap.get(DcMotor.class, "duck_wheel");
+            //arm_pivot   = hardwareMap.get(DcMotor.class, "arm_pivot");
+            //arm_raise   = hardwareMap.get(DcMotor.class, "arm_raise");
 
 
             // gamepad controllers
-            double left_pivot  = gamepad1.left_trigger * gamepad1.left_trigger * Math.abs(gamepad1.left_trigger) * pivot_mod;
-            double right_pivot = gamepad1.right_trigger * gamepad1.right_trigger * Math.abs(gamepad1.right_trigger) * pivot_mod;
-            double power       = (gamepad1.left_stick_y * gamepad1.left_stick_y * gamepad1.left_stick_y)*wheel_mod;
-            double strafe      = gamepad1.left_stick_x * gamepad1.left_stick_x * Math.abs(gamepad1.left_stick_x);
+            double twist  = (gamepad1.right_trigger - gamepad1.left_trigger) * pivot_mod;
+            double y = gamepad1.left_stick_y;
+            double x = gamepad1.left_stick_x;
 
-
-            // set wheel power based on stick and trigger input
-            front_left.setPower(power - strafe + left_pivot - right_pivot);
-            front_right.setPower(-power - strafe + left_pivot - right_pivot);
-            back_left.setPower(power + strafe + left_pivot - right_pivot);
-            back_right.setPower(-power + strafe + left_pivot - right_pivot);
-
-            // This makes the duck wheel spin
-            if(gamepad1.a) {
-                duck.setPower(duck_power);
-            }
-
-            // Y opens the claw, letting go closes it. If not being held, respond to right stick.
+            // all arm power
             if(gamepad1.y) {
                 if (!y_toggle) {
-                    claw.setPosition(-claw.getPosition());
+                    gripper.setPosition(-gripper.getPosition());
                     y_toggle = true;
                 } else {
-                    claw.setPosition(1.0);
+                    gripper.setPosition(1.0);
                 }
             } else {
                 y_toggle = false;
-                claw.setPosition((Math.abs(gamepad1.right_stick_y))*(gamepad1.right_stick_y)*(gamepad1.right_stick_y));
+                gripper.setPosition(0);
             }
 
-            // Extend the arm.
-            if(gamepad1.x) {
-                arm_out.setPower(arm_out_power);
-            } else if(gamepad1.b) arm_out.setPower(-arm_out_power);
-
-            // Move the arm the duck wheel is on
-            if(gamepad1.right_bumper) {
-                lazy.setPower(lazy_power);
-            } else if(gamepad1.left_bumper) {
-                lazy.setPower(-lazy_power);
+            if (gamepad1.a) {
+                duck_wheel.setPower(1);
+            } else {
+                duck_wheel.setPower(0);
             }
 
-            // moves da arm
-            if(gamepad1.dpad_up) {
-                arm_up.setPower(arm_up_power);
-            } else if (gamepad1.dpad_down) arm_up.setPower(-arm_up_power);
+
+            // wheel movement
+            front_right.setPower((y + x + twist) * wheel_mod);
+            front_left.setPower((y - x + twist) * wheel_mod);
+            back_right.setPower((-y - x - twist) * wheel_mod);
+            back_left.setPower((-y + x - twist) * wheel_mod);
+
+
+            // all new dope telemetry
+            telemetry.addData("x_power: ", x);
+            telemetry.addData("y_power: ", y);
+            telemetry.addData("twist: ", twist);
+            telemetry.update();
         }
     }
 }
