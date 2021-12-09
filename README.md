@@ -21,14 +21,20 @@
 
 
 -- To Do --
-* Organizing last year's code (comment it all & add to repo) 
-* Communicate with build team in order to start the movement code
+* Organizing last year's code (comment it all) // not really needed, the examples FTC gives us show mostly everything
+* Make sure movement is still working on both robots
+* Make sure all functions of each robot are working
+* Change speeds / controls for each team so that the person controlling competition day is ballin'
+* Learn how to set up the camera with the robot
+* Set up tensorflow
+* Use tensorflow to make an autonomous
 
 
 -- ChangeLog --
 * Date: brief synopsis of what we did (part of the 20 minute time period)
 * 9/28/2021  - Cover basics of Java (data types, classes & objects), all meeting to this point
 * 10/21/2021 - Simple movement code being done by all
+* 12/9/2021 - movement code should be done, and proper error handling added
 
 
 -- Last Year's Code --
