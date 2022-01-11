@@ -5,6 +5,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.*;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.Func;
+
 @TeleOp(name = "Team black robnot", group = "best_opmode")
 public class beta_test<motor> extends LinearOpMode {
 
@@ -30,14 +32,19 @@ public class beta_test<motor> extends LinearOpMode {
     private Servo   gripper     = null;
 
     boolean y_toggle = false;
+    int num_of_errors = 0;
 
     @Override   // we're over-riding their function to run our code instead of ftc's!
     public void runOpMode() {
-        waitForStart();
+        // shows the current battery life in volts whenever you run opmode
+        telemetry.addData("voltage", "%.1f volts", new Func<Double>() {
+            @Override public Double value() {
+                return getBatteryVoltage();
+            }
+        });
 
-        //ElapsedTime opmodeRunTime = new ElapsedTime();  // creates a timer, accessed by opmodeRunTime.seconds();
+        telemetry.addData(">", "Waiting For Start");
 
-        int num_of_errors = 0;
         /* catches any errors and tells us what's not connected properly, if something isn't connected properly */
         try {
             front_left = hardwareMap.get(DcMotor.class, "front_left"); // gobuilda move robot
@@ -102,6 +109,8 @@ public class beta_test<motor> extends LinearOpMode {
             ++num_of_errors;
         }
         telemetry.update();
+
+        waitForStart();
 
         while (opModeIsActive()) {
             // gamepad controls
