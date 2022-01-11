@@ -12,7 +12,7 @@ public class gold_robnot<motor> extends LinearOpMode {
 
     // modifications/power
     private static final double pivot_mod  = .85;
-    private static final double wheel_mod  = 1;
+    private static final double wheel_mod  = .3;
     private static final double duck_mod   = .28;
 
     private DcMotor front_left  = null;
@@ -36,54 +36,60 @@ public class gold_robnot<motor> extends LinearOpMode {
         });
 
         telemetry.addData(">", "Waiting For Start");
-        telemetry.update();
 
-        waitForStart();
-        //ElapsedTime opmodeRunTime = new ElapsedTime();  // creates a timer, accessed by opmodeRunTime.seconds();
-
+        int num_of_errors = 0;
         /* catches any errors and tells us what's not connected properly, if something isn't connected properly */
         try {
             front_left = hardwareMap.get(DcMotor.class, "front_left"); // gobuilda move robot
         } catch (Exception e) {
             telemetry.addData(">", "Error Finding front_left, is it setup correctly?");
+            ++num_of_errors;
         }
 
         try {
             front_right = hardwareMap.get(DcMotor.class, "front_right");
         } catch (Exception e) {
             telemetry.addData(">","Error Finding front_right, is it setup correctly?");
+            ++num_of_errors;
         }
 
         try {
             back_left = hardwareMap.get(DcMotor.class, "back_left");
         } catch (Exception e) {
             telemetry.addData(">","Error Finding back_left, is it setup correctly?");
+            ++num_of_errors;
         }
 
         try {
             back_right = hardwareMap.get(DcMotor.class, "back_right");
         } catch (Exception e) {
             telemetry.addData(">","Error Finding back_right, is it setup correctly?");
+            ++num_of_errors;
         }
 
         try {
             arm_raise = hardwareMap.get(DcMotor.class, "arm_raise");
         } catch (Exception e) {
             telemetry.addData(">","Error Finding arm_raise, is it setup correctly?");
+            ++num_of_errors;
         }
 
         try {
             duck_wheel = hardwareMap.get(DcMotor.class, "duck_wheel");
         } catch (Exception e) {
             telemetry.addData(">","Error Finding duck_wheel, is it setup correctly?");
+            ++num_of_errors;
         }
 
         try {
             gripper = hardwareMap.get(Servo.class, "gripper");
         } catch (Exception e) {
             telemetry.addData(">","Error Finding gripper servo, is it setup correctly?");
+            ++num_of_errors;
         }
         telemetry.update();
+
+        waitForStart();
 
         while (opModeIsActive()) {
 
@@ -105,7 +111,7 @@ public class gold_robnot<motor> extends LinearOpMode {
             // x is to put it in the middle level
 
             // gamepad controllers
-            double twist  = (gamepad1.right_trigger - gamepad1.left_trigger) * pivot_mod;
+            double twist  = (gamepad1.left_trigger - gamepad1.right_trigger) * pivot_mod;
             double y = gamepad1.left_stick_y;
             double x = gamepad1.left_stick_x;
 
@@ -136,18 +142,20 @@ public class gold_robnot<motor> extends LinearOpMode {
 
             // wheel movement, makes sure all of the motors exist, shouldn't slow anything down
             if (front_left != null && front_right != null && back_left != null && back_right != null) {
-                front_right.setPower((y - x + twist) * wheel_mod);
-                front_left.setPower((y + x - twist) * wheel_mod);
-                back_right.setPower((y + x + twist) * wheel_mod);
-                back_left.setPower((y - x - twist) * wheel_mod);
+                front_right.setPower((-y - x + twist) * wheel_mod);
+                front_left.setPower((y - x + twist) * wheel_mod);
+                back_right.setPower((-y + x + twist) * wheel_mod);
+                back_left.setPower((y - x + twist) * wheel_mod);
             }
 
 
-            // all new dope telemetry
-            telemetry.addData("x_power: ", x);
-            telemetry.addData("y_power: ", y);
-            telemetry.addData("twist: ", twist);
-            telemetry.update();
+            // only update telemetry
+            if (num_of_errors == 0) {
+                telemetry.addData("x_power: ", x);
+                telemetry.addData("y_power: ", y);
+                telemetry.addData("twist: ", twist);
+                telemetry.update();
+            }
         }
     }
 
