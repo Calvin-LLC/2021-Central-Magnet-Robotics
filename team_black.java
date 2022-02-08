@@ -2,19 +2,22 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.*;
-import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.Func;
 
-@TeleOp(name = "Team black robnot", group = "best_opmode")
-public class beta_test<motor> extends LinearOpMode {
+@TeleOp(name = "Team Black Robnot", group = "best_opmode")
+public class black_robnot<motor> extends LinearOpMode {
 
     // modifications/power
-    private static final double pivot_mod  = .85;
-    private static final double wheel_mod  = 1;
-    private static final double duck_mod   = .25;
-    private static final double arm_out_mod    = .5;
+    private static final double pivot_mod       = 1;
+    private static final double wheel_mod       = 1;
+    private static final double high_wheel_mod  = 1;
+    private static final double duck_mod        = .25;
+    private static final double arm_out_mod     = .7;
+    private static final double arm_pivot_mod   = .5;
 
 
     // moto declarations
@@ -26,10 +29,11 @@ public class beta_test<motor> extends LinearOpMode {
 
     // arm shananaginz
     private DcMotor arm_pivot   = null;
-    private DcMotor arm_raise   = null;
     private DcMotor duck_wheel  = null;
-    private DcMotor arm_out     = null;
-    private Servo   gripper     = null;
+    private Servo   arm_claw    = null;
+    private Servo   arm_y1      = null;
+    private Servo   arm_y2      = null;
+
 
     boolean y_toggle = false;
     int num_of_errors = 0;
@@ -75,20 +79,6 @@ public class beta_test<motor> extends LinearOpMode {
         }
 
         try {
-            arm_raise = hardwareMap.get(DcMotor.class, "arm_raise");
-        } catch (Exception e) {
-            telemetry.addData(">","Error Finding arm_raise, is it setup correctly?");
-            ++num_of_errors;
-        }
-
-        try {
-            arm_out = hardwareMap.get(DcMotor.class, "arm_out");
-        } catch (Exception e) {
-            telemetry.addData(">","Error Finding arm_out, is it setup correctly?");
-            ++num_of_errors;
-        }
-
-        try {
             arm_pivot = hardwareMap.get(DcMotor.class, "arm_pivot");
         } catch (Exception e) {
             telemetry.addData(">","Error Finding arm_pivot, is it setup correctly?");
@@ -103,57 +93,80 @@ public class beta_test<motor> extends LinearOpMode {
         }
 
         try {
-            gripper = hardwareMap.get(Servo.class, "gripper");
+            arm_y1 = hardwareMap.get(Servo.class, "arm_y1");
         } catch (Exception e) {
-            telemetry.addData(">","Error Finding gripper servo, is it setup correctly?");
+            telemetry.addData(">","Error Finding arm_y1 servo, is it setup correctly?");
+            ++num_of_errors;
+        }
+
+        try {
+            arm_y2 = hardwareMap.get(Servo.class, "arm_y2");
+        } catch (Exception e) {
+            telemetry.addData(">","Error Finding arm_y2 servo, is it setup correctly?");
+            ++num_of_errors;
+        }
+
+        try {
+            arm_claw = hardwareMap.get(Servo.class, "gripper");
+        } catch (Exception e) {
+            telemetry.addData(">","Error Finding arm_claw servo, is it setup correctly?");
             ++num_of_errors;
         }
         telemetry.update();
+        num_of_errors = 0;
 
+        arm_pivot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         waitForStart();
 
         while (opModeIsActive()) {
             // gamepad controls
             double twist  = (gamepad1.right_trigger - gamepad1.left_trigger) * pivot_mod;
-            double y = gamepad1.left_stick_y;
-            double x = gamepad1.left_stick_x;
-            double pivot_power = gamepad1.right_stick_x;
-            double raise_power = gamepad1.right_stick_y;
+            double y = gamepad1.left_stick_y * (1 / .707); // 1 / sin(45)
+            double x = gamepad1.left_stick_x * (1 / .707); // 1 / sin(45)
 
+
+            // movement curve
+            if (y > .8) {
+                y *= high_wheel_mod;
+            } else {
+                y *= wheel_mod;
+            }
+            if (x > .8) {
+                x *= high_wheel_mod;
+            } else {
+                x *= wheel_mod;
+            }
 
             // all arm power
-            if (gripper != null) {
-                if (gamepad1.y) {
+            if (arm_claw != null) {
+                if (gamepad2.y) {
                     if (!y_toggle) {
-                        gripper.setPosition(-gripper.getPosition());
+                        arm_claw.setPosition(-arm_claw.getPosition());
                         y_toggle = true;
                     } else {
-                        gripper.setPosition(1.0);
+                        arm_claw.setPosition(1.0);
                     }
                 } else {
                     y_toggle = false;
-                    gripper.setPosition(0);
+                    arm_claw.setPosition(0);
                 }
             }
 
+            // arm out
+            if (arm_y1 != null && arm_y2 != null) {
 
-            // push arm out
-            if (arm_out != null) {
-                if (gamepad1.left_bumper) arm_out.setPower(arm_out_mod);
-                else if (gamepad1.right_bumper) arm_out.setPower(-arm_out_mod);
             }
-
 
             // arm pivot and power
-            if (arm_pivot != null && arm_raise != null) {
-                arm_pivot.setPower(pivot_power);
-                arm_raise.setPower(raise_power);
+            if (arm_pivot != null) {
+                arm_pivot.setPower(gamepad2.left_stick_x * arm_pivot_mod);
             }
-
 
             // duck power
             if (duck_wheel != null) {
-                if (gamepad1.right_bumper) {
+                if (gamepad2.right_bumper) {
+                    duck_wheel.setPower(1 * duck_mod);
+                } else if (gamepad2.left_bumper) {
                     duck_wheel.setPower(1 * duck_mod);
                 } else {
                     duck_wheel.setPower(0);
@@ -169,11 +182,12 @@ public class beta_test<motor> extends LinearOpMode {
                 back_left.setPower((y + x - twist) * wheel_mod);
             }
 
-            // only update telemetry 
+            // only update telemetry
             if (num_of_errors == 0) {
                 telemetry.addData("x_power: ", x);
                 telemetry.addData("y_power: ", y);
                 telemetry.addData("twist: ", twist);
+                telemetry.addData("pivot power", gamepad2.left_stick_x);
                 telemetry.update();
             }
         }
