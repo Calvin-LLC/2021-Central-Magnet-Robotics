@@ -1,14 +1,20 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
+import org.firstinspires.ftc.robotcore.external.Func;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
+
+import java.util.ArrayList;
 import java.util.List;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
+
 
 /**
  * This 2020-2021 OpMode illustrates the basics of using the TensorFlow Object Detection API to
@@ -20,8 +26,8 @@ import java.util.List;
  * IMPORTANT: In order to use this OpMode, you need to obtain your own Vuforia license key as
  * is explained below.
  */
-@TeleOp(name = "Concept: TensorFlow Object Detection Webcam", group = "Concept")
-@Disabled
+@TeleOp(name = "Concept: TensorFlow Object Detection Webcam", group = "best_opmode")
+
 public class Test extends LinearOpMode {
     /* Note: This sample uses the all-objects Tensor Flow model (FreightFrenzy_BCDM.tflite), which contains
      * the following 4 detectable objects
@@ -41,6 +47,25 @@ public class Test extends LinearOpMode {
             "Duck",
             "Marker"
     };
+
+    // modifications/power
+    private static final double pivot_mod  = .85;
+    private static final double wheel_mod  = .8;
+    private static final double duck_mod   = .28;
+    private static final double claw_mod = .5;
+
+    private DcMotor front_left  = null;
+    private DcMotor front_right = null;
+    private DcMotor back_left   = null;
+    private DcMotor back_right  = null;
+
+    private DcMotor arm_raise   = null;
+    private DcMotor duck_wheel  = null;
+    private Servo   gripper     = null;
+
+    double twist = 0;
+    double y     = 0;
+    double x     = 0;
 
     /*
      * IMPORTANT: You need to obtain your own license key to use Vuforia. The string below with which
@@ -68,8 +93,73 @@ public class Test extends LinearOpMode {
      */
     private TFObjectDetector tfod;
 
+    double central_point = 250;
     @Override
     public void runOpMode() {
+
+        // shows the current battery life in volts whenever you run opmode
+        telemetry.addData("voltage", "%.1f volts", new Func<Double>() {
+            @Override public Double value() {
+                return getBatteryVoltage();
+            }
+        });
+
+        telemetry.addData(">", "Waiting For Start");
+
+        int num_of_errors = 0;
+        /* catches any errors and tells us what's not connected properly, if something isn't connected properly */
+        try {
+            front_left = hardwareMap.get(DcMotor.class, "front_left"); // gobuilda move robot
+        } catch (Exception e) {
+            telemetry.addData(">", "Error Finding front_left, is it setup correctly?");
+            ++num_of_errors;
+        }
+
+        try {
+            front_right = hardwareMap.get(DcMotor.class, "front_right");
+        } catch (Exception e) {
+            telemetry.addData(">","Error Finding front_right, is it setup correctly?");
+            ++num_of_errors;
+        }
+
+        try {
+            back_left = hardwareMap.get(DcMotor.class, "back_left");
+        } catch (Exception e) {
+            telemetry.addData(">","Error Finding back_left, is it setup correctly?");
+            ++num_of_errors;
+        }
+
+        try {
+            back_right = hardwareMap.get(DcMotor.class, "back_right");
+        } catch (Exception e) {
+            telemetry.addData(">","Error Finding back_right, is it setup correctly?");
+            ++num_of_errors;
+        }
+
+        try {
+            arm_raise = hardwareMap.get(DcMotor.class, "arm_raise");
+        } catch (Exception e) {
+            telemetry.addData(">","Error Finding arm_raise, is it setup correctly?");
+            ++num_of_errors;
+        }
+
+        try {
+            duck_wheel = hardwareMap.get(DcMotor.class, "duck_wheel");
+        } catch (Exception e) {
+            telemetry.addData(">","Error Finding duck_wheel, is it setup correctly?");
+            ++num_of_errors;
+        }
+
+        try {
+            gripper = hardwareMap.get(Servo.class, "gripper");
+        } catch (Exception e) {
+            telemetry.addData(">","Error Finding gripper servo, is it setup correctly?");
+            ++num_of_errors;
+        }
+        telemetry.update();
+
+        waitForStart();
+
         // The TFObjectDetector uses the camera frames from the VuforiaLocalizer, so we create that
         // first.
         initVuforia();
@@ -96,28 +186,68 @@ public class Test extends LinearOpMode {
         telemetry.update();
         waitForStart();
 
-        if (opModeIsActive()) {
-            while (opModeIsActive()) {
-                if (tfod != null) {
-                    // getUpdatedRecognitions() will return null if no new information is available since
-                    // the last time that call was made.
-                    List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
-                    if (updatedRecognitions != null) {
-                        telemetry.addData("# Object Detected", updatedRecognitions.size());
-                        // step through the list of recognitions and display boundary info.
-                        int i = 0;
-                        for (Recognition recognition : updatedRecognitions) {
-                            telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
-                            telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
-                                    recognition.getLeft(), recognition.getTop());
-                            telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
-                                    recognition.getRight(), recognition.getBottom());
-                            i++;
+
+
+        while (opModeIsActive()) {
+            boolean marker_found = false;
+            ArrayList<Double> x_coord = new ArrayList<Double>();
+            ArrayList<Double> y_coord = new ArrayList<Double>();
+
+            if (tfod != null) {
+                // getUpdatedRecognitions() will return null if no new information is available since
+                // the last time that call was made.
+                List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
+                if (updatedRecognitions != null) {
+                    telemetry.addData("# Object Detected", updatedRecognitions.size());
+                    // step through the list of recognitions and display boundary info.
+                    int i = 0;
+                    for (Recognition recognition : updatedRecognitions) {
+                        telemetry.addData(String.format("label (%d)", i), recognition.getLabel());
+                        telemetry.addData(String.format("  left,top (%d)", i), "%.03f , %.03f",
+                                recognition.getLeft(), recognition.getTop());
+                        telemetry.addData(String.format("  right,bottom (%d)", i), "%.03f , %.03f",
+                                recognition.getRight(), recognition.getBottom());
+                        x_coord.set(i,(double) (recognition.getTop() / 2));
+                        y_coord.set(i, (double) (recognition.getLeft() / 2));
+
+                        if (x_coord.get(i) > central_point) {
+                            telemetry.addData("Object found at ", x_coord.get(i));
+                            telemetry.addData("Twist to the right", null);
+                        } else if (x_coord.get(i) < central_point) {
+                            telemetry.addData("Object found at ", x_coord.get(i));
+                            telemetry.addData("Twist to the left", null);
                         }
-                        telemetry.update();
+
+                        if (y_coord.get(i) > central_point) {
+                            telemetry.addData("Object found at ", y_coord.get(i));
+                            telemetry.addData("Go Down!", null);
+                        } else if (y_coord.get(i) < central_point) {
+                            telemetry.addData("Object found at ", y_coord.get(i));
+                            telemetry.addData("Go Up!", null);
+                        }
+
+                        if (recognition.getLabel().equals("Marker")) {
+                            marker_found = true;
+                            telemetry.addData("Marker found! ", i);
+                        }
+                        i++;
                     }
+                    telemetry.update();
                 }
             }
+
+            if (!marker_found) {
+                twist = .1;
+            } else {
+                twist = 0;
+            }
+
+
+
+            front_right.setPower((-y - x + twist) * wheel_mod);
+            front_left.setPower((y - x + twist) * wheel_mod);
+            back_right.setPower((-y + x + twist) * wheel_mod);
+            back_left.setPower((y + x + twist) * wheel_mod);
         }
     }
 
@@ -151,5 +281,17 @@ public class Test extends LinearOpMode {
         tfodParameters.inputSize = 320;
         tfod = ClassFactory.getInstance().createTFObjectDetector(tfodParameters, vuforia);
         tfod.loadModelFromAsset(TFOD_MODEL_ASSET, LABELS);
+    }
+
+    // Computes the current battery voltage, from ConceptTelemetry file in the examples
+    double getBatteryVoltage() {
+        double result = Double.POSITIVE_INFINITY;
+        for (VoltageSensor sensor : hardwareMap.voltageSensor) {
+            double voltage = sensor.getVoltage();
+            if (voltage > 0) {
+                result = Math.min(result, voltage);
+            }
+        }
+        return result;
     }
 }
