@@ -2,18 +2,20 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.*;
-import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.Func;
 
-@TeleOp(name = "Team gold robnot", group = "best_opmode")
+@TeleOp(name = "Team Gold Robnot", group = "best_opmode")
 public class gold_robnot<motor> extends LinearOpMode {
 
     // modifications/power
     private static final double pivot_mod  = .85;
-    private static final double wheel_mod  = .3;
-    private static final double duck_mod   = .28;
+    private static final double wheel_mod  = .75;
+    private static final double duck_mod   = .4;
+    private static final double claw_mod = .75;
 
     private DcMotor front_left  = null;
     private DcMotor front_right = null;
@@ -94,7 +96,7 @@ public class gold_robnot<motor> extends LinearOpMode {
         while (opModeIsActive()) {
 
             // trying to get the arm_raise motor to lift the arm up and down
-            if (arm_raise  != null) {
+            /*if (arm_raise  != null) {
                 arm_raise.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
                 if (gamepad1.a) {
@@ -103,7 +105,7 @@ public class gold_robnot<motor> extends LinearOpMode {
                 }
 
                 arm_raise.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            }
+            }*/
 
             // right joy stick up and down will move arm up and down
             // a is top,
@@ -116,9 +118,14 @@ public class gold_robnot<motor> extends LinearOpMode {
             double x = gamepad1.left_stick_x;
 
 
+            if (arm_raise != null) {
+                arm_raise.setPower(-gamepad2.left_stick_y * claw_mod);
+            }
+
+
             // all arm power
             if (gripper != null) {
-                if (gamepad1.y) {
+                if (gamepad2.y) {
                     if (!y_toggle) {
                         gripper.setPosition(-gripper.getPosition());
                         y_toggle = true;
@@ -132,8 +139,10 @@ public class gold_robnot<motor> extends LinearOpMode {
             }
 
             if (duck_wheel != null) {
-                if (gamepad1.right_bumper) {
+                if (gamepad2.b) {
                     duck_wheel.setPower(1 * duck_mod);
+                } else if (gamepad2.a){
+                    duck_wheel.setPower(-1 * duck_mod);
                 } else {
                     duck_wheel.setPower(0);
                 }
@@ -145,7 +154,7 @@ public class gold_robnot<motor> extends LinearOpMode {
                 front_right.setPower((-y - x + twist) * wheel_mod);
                 front_left.setPower((y - x + twist) * wheel_mod);
                 back_right.setPower((-y + x + twist) * wheel_mod);
-                back_left.setPower((y - x + twist) * wheel_mod);
+                back_left.setPower((y + x + twist) * wheel_mod);
             }
 
 
