@@ -16,8 +16,9 @@ public class black_robnot<motor> extends LinearOpMode {
     private static final double wheel_mod       = 1;
     private static final double high_wheel_mod  = 1;
     private static final double duck_mod        = .25;
-    private static final double arm_out_mod     = .7;
     private static final double arm_pivot_mod   = .5;
+    private static final double arm_raise_mod   = .4;
+    private static final double arm_raise2_mod  = .4;
 
 
     // moto declarations
@@ -30,9 +31,9 @@ public class black_robnot<motor> extends LinearOpMode {
     // arm shananaginz
     private DcMotor arm_pivot   = null;
     private DcMotor duck_wheel  = null;
+    private DcMotor arm_y1      = null;
+    private DcMotor arm_y2      = null;
     private Servo   arm_claw    = null;
-    private Servo   arm_y1      = null;
-    private Servo   arm_y2      = null;
 
 
     boolean y_toggle = false;
@@ -51,7 +52,9 @@ public class black_robnot<motor> extends LinearOpMode {
 
         /* catches any errors and tells us what's not connected properly, if something isn't connected properly */
         try {
-            front_left = hardwareMap.get(DcMotor.class, "front_left"); // gobuilda move robot
+            front_left = hardwareMap.get(DcMotor.class, "front_left");    // gobuilda move robot
+            front_left.setMode(DcMotor.RunMode.RUN_USING_ENCODER);                  // make sure all motors spin the same speed
+            front_left.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);       // brakes when you stop instead of sliding around everywhere
         } catch (Exception e) {
             telemetry.addData(">", "Error Finding front_left, is it setup correctly?");
             ++num_of_errors;
@@ -59,6 +62,8 @@ public class black_robnot<motor> extends LinearOpMode {
 
         try {
             front_right = hardwareMap.get(DcMotor.class, "front_right");
+            front_right.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            front_right.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         } catch (Exception e) {
             telemetry.addData(">","Error Finding front_right, is it setup correctly?");
             ++num_of_errors;
@@ -66,6 +71,8 @@ public class black_robnot<motor> extends LinearOpMode {
 
         try {
             back_left = hardwareMap.get(DcMotor.class, "back_left");
+            back_left.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            back_left.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         } catch (Exception e) {
             telemetry.addData(">","Error Finding back_left, is it setup correctly?");
             ++num_of_errors;
@@ -73,6 +80,8 @@ public class black_robnot<motor> extends LinearOpMode {
 
         try {
             back_right = hardwareMap.get(DcMotor.class, "back_right");
+            back_right.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            back_right.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         } catch (Exception e) {
             telemetry.addData(">","Error Finding back_right, is it setup correctly?");
             ++num_of_errors;
@@ -80,6 +89,8 @@ public class black_robnot<motor> extends LinearOpMode {
 
         try {
             arm_pivot = hardwareMap.get(DcMotor.class, "arm_pivot");
+            arm_pivot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            arm_pivot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         } catch (Exception e) {
             telemetry.addData(">","Error Finding arm_pivot, is it setup correctly?");
             ++num_of_errors;
@@ -87,27 +98,33 @@ public class black_robnot<motor> extends LinearOpMode {
 
         try {
             duck_wheel = hardwareMap.get(DcMotor.class, "duck_wheel");
+            duck_wheel.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            duck_wheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         } catch (Exception e) {
             telemetry.addData(">","Error Finding duck_wheel, is it setup correctly?");
             ++num_of_errors;
         }
 
         try {
-            arm_y1 = hardwareMap.get(Servo.class, "arm_y1");
+            arm_y1 = hardwareMap.get(DcMotor.class, "arm_y1");
+            arm_y1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            arm_y1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         } catch (Exception e) {
-            telemetry.addData(">","Error Finding arm_y1 servo, is it setup correctly?");
+            telemetry.addData(">","Error Finding arm_y1 motor, is it setup correctly?");
             ++num_of_errors;
         }
 
         try {
-            arm_y2 = hardwareMap.get(Servo.class, "arm_y2");
+            arm_y2 = hardwareMap.get(DcMotor.class, "arm_y2");
+            arm_y2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            arm_y2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         } catch (Exception e) {
-            telemetry.addData(">","Error Finding arm_y2 servo, is it setup correctly?");
+            telemetry.addData(">","Error Finding arm_y2 motor, is it setup correctly?");
             ++num_of_errors;
         }
 
         try {
-            arm_claw = hardwareMap.get(Servo.class, "gripper");
+            arm_claw = hardwareMap.get(Servo.class, "arm_claw");
         } catch (Exception e) {
             telemetry.addData(">","Error Finding arm_claw servo, is it setup correctly?");
             ++num_of_errors;
@@ -115,10 +132,10 @@ public class black_robnot<motor> extends LinearOpMode {
         telemetry.update();
         num_of_errors = 0;
 
-        arm_pivot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         waitForStart();
 
         while (opModeIsActive()) {
+
             // gamepad controls
             double twist  = (gamepad1.right_trigger - gamepad1.left_trigger) * pivot_mod;
             double y = gamepad1.left_stick_y * (1 / .707); // 1 / sin(45)
@@ -152,33 +169,33 @@ public class black_robnot<motor> extends LinearOpMode {
                 }
             }
 
+
             // arm out
             if (arm_y1 != null && arm_y2 != null) {
-
+                arm_y1.setPower(gamepad2.right_stick_x * arm_raise_mod);
+                arm_y2.setPower(gamepad2.right_stick_y * arm_raise2_mod);
             }
+
 
             // arm pivot and power
             if (arm_pivot != null) {
                 arm_pivot.setPower(gamepad2.left_stick_x * arm_pivot_mod);
             }
 
+
             // duck power
             if (duck_wheel != null) {
-                if (gamepad2.right_bumper) {
-                    duck_wheel.setPower(1 * duck_mod);
-                } else if (gamepad2.left_bumper) {
-                    duck_wheel.setPower(1 * duck_mod);
-                } else {
-                    duck_wheel.setPower(0);
-                }
+                if (gamepad2.right_bumper) duck_wheel.setPower(1 * duck_mod);
+                else if (gamepad2.left_bumper) duck_wheel.setPower(-1 * duck_mod);
+                else duck_wheel.setPower(0);
             }
 
 
             // wheel movement, makes sure all of the motors exist, shouldn't slow anything down
             if (front_left != null && front_right != null && back_left != null && back_right != null) {
                 front_right.setPower((y + x + twist) * wheel_mod);
-                front_left.setPower((y - x - twist) * wheel_mod);
-                back_right.setPower(-(y - x + twist) * wheel_mod);
+                front_left.setPower((-y + x + twist) * wheel_mod);
+                back_right.setPower((y - x + twist) * wheel_mod);
                 back_left.setPower((y + x - twist) * wheel_mod);
             }
 
@@ -190,6 +207,54 @@ public class black_robnot<motor> extends LinearOpMode {
                 telemetry.addData("pivot power", gamepad2.left_stick_x);
                 telemetry.update();
             }
+        }
+
+        try {
+            front_left.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER); // reset encoders
+        } catch (Exception e) {
+            telemetry.addData(">", "Error resetting front_left's encoder, is it setup correctly?");
+        }
+
+        try {
+            front_right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        } catch (Exception e) {
+            telemetry.addData(">","Error resetting front_right's encoder, is it setup correctly?");
+        }
+
+        try {
+            back_left.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        } catch (Exception e) {
+            telemetry.addData(">","Error resetting back_left's encoder, is it setup correctly?");
+        }
+
+        try {
+            back_right.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        } catch (Exception e) {
+            telemetry.addData(">","Error resetting back_right's encoder, is it setup correctly?");
+        }
+
+        try {
+            arm_pivot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        } catch (Exception e) {
+            telemetry.addData(">","Error resetting arm_pivot's encoder, is it setup correctly?");
+        }
+
+        try {
+            duck_wheel.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        } catch (Exception e) {
+            telemetry.addData(">","Error resetting duck_wheel's encoder, is it setup correctly?");
+        }
+
+        try {
+            arm_y1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        } catch (Exception e) {
+            telemetry.addData(">","Error resetting arm_y1's encoder, is it setup correctly?");
+        }
+
+        try {
+            arm_y2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        } catch (Exception e) {
+            telemetry.addData(">","Error resetting arm_y2's encoder, is it setup correctly?");
         }
     }
 
