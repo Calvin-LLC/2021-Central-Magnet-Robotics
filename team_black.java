@@ -137,9 +137,9 @@ public class black_robnot<motor> extends LinearOpMode {
         while (opModeIsActive()) {
 
             // gamepad controls
-            double twist  = (gamepad1.right_trigger - gamepad1.left_trigger) * pivot_mod;
-            double y = gamepad1.left_stick_y * (1 / .707); // 1 / sin(45)
-            double x = gamepad1.left_stick_x * (1 / .707); // 1 / sin(45)
+            double twist  = Math.pow(gamepad1.right_trigger - gamepad1.left_trigger, 3) * pivot_mod;
+            double y = Math.pow(gamepad1.left_stick_y, 3); // i did the math and it works properly
+            double x = Math.pow(gamepad1.left_stick_x, 3);
 
 
             // movement curve
@@ -172,14 +172,14 @@ public class black_robnot<motor> extends LinearOpMode {
 
             // arm out
             if (arm_y1 != null && arm_y2 != null) {
-                arm_y1.setPower(gamepad2.right_stick_x * arm_raise_mod);
-                arm_y2.setPower(gamepad2.right_stick_y * arm_raise2_mod);
+                arm_y1.setPower(Math.pow(gamepad2.right_stick_x, 3) * arm_raise_mod);
+                arm_y2.setPower(Math.pow(gamepad2.right_stick_y, 3) * arm_raise2_mod);
             }
 
 
             // arm pivot and power
             if (arm_pivot != null) {
-                arm_pivot.setPower(gamepad2.left_stick_x * arm_pivot_mod);
+                arm_pivot.setPower(Math.pow(gamepad2.left_stick_x, 3) * arm_pivot_mod);
             }
 
 
