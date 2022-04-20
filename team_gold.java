@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -9,13 +10,13 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import org.firstinspires.ftc.robotcore.external.Func;
 
 @TeleOp(name = "Team Gold Robnot", group = "best_opmode")
-public class gold_robnot<motor> extends LinearOpMode {
+public class GoldRobnot<motor> extends LinearOpMode {
 
     // modifications/power
     private static final double pivot_mod  = .85;
-    private static final double wheel_mod  = .75;
+    private static final double wheel_mod  = .55;
     private static final double duck_mod   = .4;
-    private static final double claw_mod = .75;
+    private static final double claw_mod = .50;
 
     private DcMotor front_left  = null;
     private DcMotor front_right = null;
@@ -42,7 +43,8 @@ public class gold_robnot<motor> extends LinearOpMode {
         int num_of_errors = 0;
         /* catches any errors and tells us what's not connected properly, if something isn't connected properly */
         try {
-            front_left = hardwareMap.get(DcMotor.class, "front_left"); // gobuilda move robot
+            front_left = hardwareMap.get(DcMotor.class, "front_left");    // gobuilda move robot
+            front_left.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);       // brakes when you stop instead of sliding around everywhere
         } catch (Exception e) {
             telemetry.addData(">", "Error Finding front_left, is it setup correctly?");
             ++num_of_errors;
@@ -50,6 +52,7 @@ public class gold_robnot<motor> extends LinearOpMode {
 
         try {
             front_right = hardwareMap.get(DcMotor.class, "front_right");
+            front_right.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         } catch (Exception e) {
             telemetry.addData(">","Error Finding front_right, is it setup correctly?");
             ++num_of_errors;
@@ -57,6 +60,7 @@ public class gold_robnot<motor> extends LinearOpMode {
 
         try {
             back_left = hardwareMap.get(DcMotor.class, "back_left");
+            back_left.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         } catch (Exception e) {
             telemetry.addData(">","Error Finding back_left, is it setup correctly?");
             ++num_of_errors;
@@ -64,6 +68,7 @@ public class gold_robnot<motor> extends LinearOpMode {
 
         try {
             back_right = hardwareMap.get(DcMotor.class, "back_right");
+            back_right.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         } catch (Exception e) {
             telemetry.addData(">","Error Finding back_right, is it setup correctly?");
             ++num_of_errors;
@@ -71,6 +76,7 @@ public class gold_robnot<motor> extends LinearOpMode {
 
         try {
             arm_raise = hardwareMap.get(DcMotor.class, "arm_raise");
+            arm_raise.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         } catch (Exception e) {
             telemetry.addData(">","Error Finding arm_raise, is it setup correctly?");
             ++num_of_errors;
@@ -78,6 +84,7 @@ public class gold_robnot<motor> extends LinearOpMode {
 
         try {
             duck_wheel = hardwareMap.get(DcMotor.class, "duck_wheel");
+            duck_wheel.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         } catch (Exception e) {
             telemetry.addData(">","Error Finding duck_wheel, is it setup correctly?");
             ++num_of_errors;
@@ -113,9 +120,9 @@ public class gold_robnot<motor> extends LinearOpMode {
             // x is to put it in the middle level
 
             // gamepad controllers
-            double twist  = (gamepad1.left_trigger - gamepad1.right_trigger) * pivot_mod;
-            double y = gamepad1.left_stick_y;
-            double x = gamepad1.left_stick_x;
+            double twist  = Math.pow(gamepad1.left_trigger - gamepad1.right_trigger, 3) * pivot_mod;
+            double y = Math.pow(gamepad1.left_stick_y, 3); // i did the math and it works properly
+            double x = Math.pow(gamepad1.left_stick_x, 3);
 
 
             if (arm_raise != null) {
@@ -139,13 +146,8 @@ public class gold_robnot<motor> extends LinearOpMode {
             }
 
             if (duck_wheel != null) {
-                if (gamepad2.b) {
-                    duck_wheel.setPower(1 * duck_mod);
-                } else if (gamepad2.a){
-                    duck_wheel.setPower(-1 * duck_mod);
-                } else {
-                    duck_wheel.setPower(0);
-                }
+                double duck = ((gamepad2.left_bumper ? 1 : 0) - (gamepad2.right_bumper ? 1 : 0)) * duck_mod;
+                duck_wheel.setPower(duck);
             }
 
 
